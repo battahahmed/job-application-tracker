@@ -223,3 +223,9 @@ __marimo__/
 *.db
 *.sqlite
 *.sqlite3
+
+jobs.db
+__pycache__/
+*.py[cod]
+.venv/
+.env
