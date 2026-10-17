@@ -40,4 +40,16 @@ def add_application(company, position, application_date, status):
     )
     connection.commit()
     cursor.close()
-    connection.close  
+    connection.close
+
+def view_application():
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM applications")
+    applications = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return applications  
