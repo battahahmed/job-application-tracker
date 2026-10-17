@@ -21,3 +21,23 @@ def create_table():
     connection.commit()
     connection.close()
 
+
+def add_application(company, position, application_date, status):
+    connection = connect_db()
+
+
+    sql_statement = """
+        INSERT INTO applications
+            (company, position, application_date, status)
+        VALUES (?, ?, ?, ?)
+
+"""
+
+    cursor = connection.cursor()
+    cursor.execute(
+        sql_statement, 
+        (company, position, application_date, status)
+    )
+    connection.commit()
+    cursor.close()
+    connection.close  
