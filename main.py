@@ -12,8 +12,12 @@ add_application(
 
 delete_application(2)
 
+update_application(3, 'Interview')
+
 applications = view_application()
 
 for application in applications:
     print(application)
+
+
 

@@ -65,3 +65,17 @@ def delete_application(application_id):
     connection.commit()
     cursor.close()
     connection.close()
+
+def update_application(application_id, new_status):
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    sql_statement = """
+        UPDATE applications
+        SET status = ?
+        WHERE id = ?
+"""
+    cursor.execute(sql_statement, (new_status, application_id))
+    connection.commit()
+    cursor.close()
+    connection.close()
