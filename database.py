@@ -52,4 +52,16 @@ def view_application():
     cursor.close()
     connection.close()
 
-    return applications  
+    return applications
+
+def delete_application(application_id):
+    connection = connect_db()
+    cursor = connection.cursor()
+    sql_statement = """
+        DELETE FROM applications
+        WHERE id = ?
+"""
+    cursor.execute(sql_statement, (application_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()

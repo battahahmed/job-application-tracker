@@ -10,7 +10,10 @@ add_application(
 )
 '''
 
+delete_application(2)
+
 applications = view_application()
 
 for application in applications:
     print(application)
+
