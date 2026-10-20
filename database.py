@@ -76,6 +76,10 @@ def update_application(application_id, new_status):
         WHERE id = ?
 """
     cursor.execute(sql_statement, (new_status, application_id))
+    if cursor.rowcount == 0:
+        print('No matching application was updated.')
+    else:
+        print('Application status updated successfully!')
     connection.commit()
     cursor.close()
     connection.close()
