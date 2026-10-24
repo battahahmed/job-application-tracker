@@ -62,20 +62,26 @@ def delete_application(application_id):
         WHERE id = ?
 """
     cursor.execute(sql_statement, (application_id,))
+
+    if cursor.rowcount == 0:
+        print("No application found with that ID.")
+    else:
+        print("Application deleted successfully.")
+
     connection.commit()
     cursor.close()
     connection.close()
 
 def update_application(application_id, new_status):
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor() 
 
     sql_statement = """
         UPDATE applications
         SET status = ?
         WHERE id = ?
 """
-    cursor.execute(sql_statement, (new_status, application_id))
+    cursor.execute(sql_statement, (new_status, application_id)) 
     if cursor.rowcount == 0:
         print('No matching application was updated.')
     else:

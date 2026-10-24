@@ -14,14 +14,26 @@ while True:
     choice = input("Enter your choice (1-5): ")
     if choice == '2':
         applications = view_application()
-        for application in applications:
-            print(application)
+        if not applications:
+            print("No applications found.")
+        else:
+        
+            for application in applications:
+                id, company, position, app_date, status = application    
+                print(f"""
+                ID: {id}
+                Company: {company}
+                Position: {position}
+                Application date: {app_date}
+                Status: {status}
+                ---------------------------------------------
+    """)
 
     elif choice == '1':
-        company = input("Company name: ")
-        position = input("Job position: ")
+        company = input("Company name: ").strip().upper()
+        position = input("Job position: ").strip().upper()
         app_date = input("Application date: ")
-        status = input("Application status: ")
+        status = input("Application status: ").strip().upper()
         
         add_application(company, position, app_date, status)
 
@@ -31,10 +43,17 @@ while True:
         except(ValueError):
             print('Enter a valid numeric ID')
             continue
-            
-        new_status = input("New status: ")
 
-        update_application(id, new_status)
+        valid_statuses = ["Applied", "Interview", "Rejected", "Offer"]
+
+        while True:   
+            new_status = input("New status: ").title()
+            if new_status not in valid_statuses:
+                print("Invalid choice! Please Enter Applied, Interview, Rejected or Offer.")
+                continue
+
+            update_application(id, new_status)
+            break
 
     elif choice == '4':
         try:
@@ -50,8 +69,6 @@ while True:
         break
     else:
         print('Invalid choice. Please enter a number between 1 and 5.')
-    
-
 
 
 
