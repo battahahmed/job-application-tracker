@@ -9,9 +9,10 @@ while True:
 2. View all applications
 3. Update application status
 4. Delete an application
-5. Exit
+5. Search applications by company
+6. Exit
 """)
-    choice = input("Enter your choice (1-5): ")
+    choice = input("Enter your choice (1-6): ")
     if choice == '2':
         applications = view_application()
         if not applications:
@@ -65,10 +66,30 @@ while True:
         delete_application(app_id)
 
     elif choice == '5':
+        company = input("Enter company name to search: ").strip().upper()
+        if not company:
+            print('Company name cannot be empty!')
+            continue 
+        applications = search_application(company)
+        if not applications:
+            print("No applications found for that company!")
+        else:
+            for application in applications:
+                id, company, position, app_date, status = application    
+                print(f"""
+                ID: {id}
+                Company: {company}
+                Position: {position}
+                Application date: {app_date}
+                Status: {status}
+                ---------------------------------------------
+    """)
+
+    elif choice == '6':
         print('Goodbye! Thanks for using Job Application Tracker.')
         break
     else:
-        print('Invalid choice. Please enter a number between 1 and 5.')
+        print('Invalid choice. Please enter a number between 1 and 6.')
 
 
 

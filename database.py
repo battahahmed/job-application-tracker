@@ -89,3 +89,28 @@ def update_application(application_id, new_status):
     connection.commit()
     cursor.close()
     connection.close()
+
+
+
+def search_application(company_name):
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    sql_statement = ("""
+        SELECT * 
+        FROM applications 
+        WHERE LOWER(company) = LOWER (?)
+    """)
+    cursor.execute(sql_statement, (company_name,))
+    applications = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return applications
+
+
+"""
+to test the search_application()
+if __name__ == "__main__":
+    results = search_application("microsoft")
+    print(results)
+"""
