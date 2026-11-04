@@ -42,15 +42,32 @@ def add_application(company, position, application_date, status):
     cursor.close()
     connection.close
 
-def view_application():
-    connection = connect_db()
-    cursor = connection.cursor()
+def view_application(user_choice):
+    sort_options = {
+        "1": "application_date DESC",
+        "2": "application_date ASC",
+        "3": "id ASC",
+        "4": "id DESC"
+    }
 
-    cursor.execute("SELECT * FROM applications")
-    applications = cursor.fetchall()
+    order_by = sort_options.get(user_choice) 
+    if order_by is not None:
+        connection = connect_db()
+        cursor = connection.cursor()
+        sql_statement = f"""
+            SELECT * 
+            FROM applications 
+            ORDER BY {order_by} 
+    """
+        cursor.execute(sql_statement)
+        applications = cursor.fetchall()
 
-    cursor.close()
-    connection.close()
+        cursor.close()
+        connection.close()
+    else:
+        print("Invalid choice")
+        return
+
 
     return applications
 
@@ -90,7 +107,23 @@ def update_application(application_id, new_status):
     cursor.close()
     connection.close()
 
+def update_application_date(application_id, new_date):
+    connection = connect_db()
+    cursor = connection.cursor() 
 
+    sql_statement = """
+        UPDATE applications
+        SET application_date = ?
+        WHERE id = ?
+"""
+    cursor.execute(sql_statement, (new_date, application_id)) 
+    if cursor.rowcount == 0:
+        print('No matching application was updated.')
+    else:
+        print('Application date updated successfully!')
+    connection.commit()
+    cursor.close()
+    connection.close()
 
 def search_application(company_name):
     connection = connect_db()
@@ -99,10 +132,12 @@ def search_application(company_name):
     sql_statement = ("""
         SELECT * 
         FROM applications 
-        WHERE LOWER(company) = LOWER (?)
+        WHERE LOWER(company) LIKE LOWER(?)
     """)
-    cursor.execute(sql_statement, (company_name,))
+
+    cursor.execute(sql_statement, (f"%{company_name}%",))
     applications = cursor.fetchall()
+    print("DEBUG search results:", applications)
     cursor.close()
     connection.close()
     return applications
@@ -114,3 +149,16 @@ if __name__ == "__main__":
     results = search_application("microsoft")
     print(results)
 """
+
+def check_application_dates():
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id, company, application_date FROM applications")
+    applications = cursor.fetchall()
+
+    for application in applications:
+        print(application)
+
+    cursor.close()
+    connection.close()
