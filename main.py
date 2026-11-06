@@ -13,9 +13,10 @@ while True:
 4. Delete an application
 5. Search applications by company
 6. Update application date
-7. Exit
+7. Filter applications by status
+8. Exit
 """)
-    choice = input("Enter your choice (1-7): ")
+    choice = input("Enter your choice (1-8): ")
     if choice == '1':
         while True:
             company = input("Company name: ").strip().upper()
@@ -156,15 +157,51 @@ while True:
 
 
         update_application_date(id, app_date)
-        
 
 
     elif choice == '7':
+        print("""
+        1. Applied
+        2. Interview
+        3. Rejected
+        4. Offer
+        5. Back to main menu
+    """
+        )
+
+        status_options = {
+            '1': 'APPLIED', 
+            '2': 'INTERVIEW', 
+            '3': 'REJECTED', 
+            '4': 'OFFER'
+        }
+        while True:
+            user_choice = input("Enter your filter choice: ").strip().upper()
+            if user_choice == '5':
+                break
+            elif user_choice not in status_options:
+                print("Invalid choice! Please enter a valid choice.")
+                continue
+            status = status_options[user_choice]
+            applications = filter_applications(status)
+            if not applications:
+                print("No applications found for that status!")
+            else:
+                for application in applications:
+                    app_id, company, position, app_date, status = application 
+                    display_date = datetime.strptime(app_date, "%Y-%m-%d").strftime("%d/%m/%Y")   
+                    print(f"""
+                    ID: {app_id}
+                    Company: {company}
+                    Position: {position}
+                    Application date: {display_date}
+                    Status: {status}
+                    ---------------------------------------------
+        """)       
+
+
+    elif choice == '8':
         print('Goodbye! Thanks for using Job Application Tracker.')
         break
     else:
-        print('Invalid choice. Please enter a number between 1 and 7.')
-        
-    
-
-
+        print('Invalid choice. Please enter a number between 1 and 8.')

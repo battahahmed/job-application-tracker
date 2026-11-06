@@ -162,3 +162,24 @@ def check_application_dates():
 
     cursor.close()
     connection.close()
+
+
+
+def filter_applications(status):
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    sql_statement = """
+        SELECT * 
+        FROM applications
+        WHERE status = ? 
+"""
+
+    cursor.execute(sql_statement, (status,))
+    applications = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return applications
+
+
+
