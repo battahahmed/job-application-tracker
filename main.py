@@ -9,14 +9,13 @@ while True:
     ===== JOB APPLICATION TRACKER =====
 1. Add an application
 2. View all applications
-3. Update application status
+3. Update application
 4. Delete an application
 5. Search applications by company
-6. Update application date
-7. Filter applications by status
-8. Exit
+6. Filter applications by status
+7. Exit
 """)
-    choice = input("Enter your choice (1-8): ")
+    choice = input("Enter your choice (1-7): ")
     if choice == '1':
         while True:
             company = input("Company name: ").strip().upper()
@@ -24,6 +23,7 @@ while True:
                 print("Company name can't be empty! Please enter a name.")
             else:
                 break
+
 
         while True:
             position = input("Job position: ").strip().upper()
@@ -92,16 +92,8 @@ while True:
             print('Enter a valid numeric ID')
             continue
 
-        valid_statuses = ["Applied", "Interview", "Rejected", "Offer"]
 
-        while True:   
-            new_status = input("New status: ").title()
-            if new_status not in valid_statuses:
-                print("Invalid choice! Please Enter Applied, Interview, Rejected or Offer.")
-                continue
-
-            update_application(id, new_status)
-            break
+        update_application(id)
             
 
     elif choice == '4':
@@ -135,31 +127,8 @@ while True:
     """)
 
 
+
     elif choice == '6':
-        try:
-            id = int(input("ID: "))
-        except(ValueError):
-            print('Enter a valid numeric ID')
-            continue
-        
-        while True:
-            new_date = input("New date DD/MM/YYYY: ").strip()
-            if new_date:   
-                try:
-                    date_object = datetime.strptime(new_date, "%d/%m/%Y")
-                    app_date = date_object.strftime("%Y-%m-%d")
-                    break
-                except ValueError:
-                    print("Invalid date. Please enter a valid date and use DD/MM/YYYY format.")
-            else:
-                print("Date can't be empty!")
-                new_date = input("New date DD/MM/YYYY: ").strip()
-
-
-        update_application_date(id, app_date)
-
-
-    elif choice == '7':
         print("""
         1. Applied
         2. Interview
@@ -200,8 +169,8 @@ while True:
         """)       
 
 
-    elif choice == '8':
+    elif choice == '7':
         print('Goodbye! Thanks for using Job Application Tracker.')
         break
     else:
-        print('Invalid choice. Please enter a number between 1 and 8.')
+        print('Invalid choice. Please enter a number between 1 and 7.')

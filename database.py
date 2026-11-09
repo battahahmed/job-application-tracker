@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 def connect_db():
     connection = sqlite3.connect('jobs.db')
@@ -42,6 +43,8 @@ def add_application(company, position, application_date, status):
     cursor.close()
     connection.close
 
+
+
 def view_application(user_choice):
     sort_options = {
         "1": "application_date DESC",
@@ -68,8 +71,124 @@ def view_application(user_choice):
         print("Invalid choice")
         return
 
-
     return applications
+
+
+
+def get_application_by_id(app_id):
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    sql_statement = """
+        SELECT *
+        FROM applications
+        WHERE id = ?
+    """
+
+    cursor.execute(sql_statement, (app_id,))
+    applications = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return applications
+
+
+ 
+def update_application(app_id):
+    print("""
+        1. Company name
+        2. Job position
+        3. Application status
+        4. Application date
+        5. Back to main menu
+""") 
+    update_options = {
+        '1': 'company',
+        '2': 'position',
+        '3': 'status',
+        '4': 'application_date'
+    }
+
+    column_indices = {
+    'company': 1,
+    'position': 2,
+    'application_date': 3,
+    'status': 4
+}
+
+    while True:
+        application = get_application_by_id(app_id)
+        print("Application retrieved:", application)
+
+        if application is None:
+            print("Application not found!")
+            return
+        
+        user_option = input("Enter your update option (1-5): ").strip()
+        if user_option == '5':
+            break
+        elif user_option not in update_options:
+            print("Enter a valid option")
+        else:
+            column_name = update_options[user_option]
+
+            while True:
+                new_value = input(f"Enter new value for {column_name}: ").strip()
+                if not new_value:
+                    print("Input cannot be empty!")
+                elif column_name == 'status':
+                    statuses = ['APPLIED', 'INTERVIEW', 'REJECTED', 'OFFER']
+                    if new_value.upper() not in statuses:
+                        print("Enter a valid status")
+                    else:
+                        new_value = new_value.upper()
+                        break
+                elif column_name == 'application_date':
+                    try:
+                        date_object = datetime.strptime(new_value, "%d/%m/%Y")
+                        new_value = date_object.strftime("%Y-%m-%d")
+                        break
+                    except ValueError:
+                        print("Invalid date. Please enter a valid date and use DD/MM/YYYY format.")
+                else:
+                    break
+
+        current_value = application[column_indices[column_name]]
+        
+        if column_name == 'status':
+            current_value = current_value.upper()
+            new_value = new_value.upper()
+
+        if current_value == new_value:    
+            print("No changes detected!")
+            continue
+
+        connection = connect_db()
+        cursor = connection.cursor()
+        
+        try:
+            sql_statement = f"""
+                UPDATE applications
+                SET {column_name} = ?
+                WHERE id = ?
+            """
+            
+            cursor.execute(sql_statement, (new_value, app_id))
+            connection.commit()
+            
+            print("Application updated successfully!")
+        
+        except sqlite3.Error as error:
+            connection.rollback()
+            print(f"Database error: {error}")
+
+        finally:
+
+            cursor.close()
+            connection.close()
+        
+
+
+
 
 def delete_application(application_id):
     connection = connect_db()
@@ -89,41 +208,7 @@ def delete_application(application_id):
     cursor.close()
     connection.close()
 
-def update_application(application_id, new_status):
-    connection = connect_db()
-    cursor = connection.cursor() 
 
-    sql_statement = """
-        UPDATE applications
-        SET status = ?
-        WHERE id = ?
-"""
-    cursor.execute(sql_statement, (new_status, application_id)) 
-    if cursor.rowcount == 0:
-        print('No matching application was updated.')
-    else:
-        print('Application status updated successfully!')
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-def update_application_date(application_id, new_date):
-    connection = connect_db()
-    cursor = connection.cursor() 
-
-    sql_statement = """
-        UPDATE applications
-        SET application_date = ?
-        WHERE id = ?
-"""
-    cursor.execute(sql_statement, (new_date, application_id)) 
-    if cursor.rowcount == 0:
-        print('No matching application was updated.')
-    else:
-        print('Application date updated successfully!')
-    connection.commit()
-    cursor.close()
-    connection.close()
 
 def search_application(company_name):
     connection = connect_db()
@@ -141,27 +226,6 @@ def search_application(company_name):
     cursor.close()
     connection.close()
     return applications
-
-
-"""
-to test the search_application()
-if __name__ == "__main__":
-    results = search_application("microsoft")
-    print(results)
-"""
-
-def check_application_dates():
-    connection = connect_db()
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT id, company, application_date FROM applications")
-    applications = cursor.fetchall()
-
-    for application in applications:
-        print(application)
-
-    cursor.close()
-    connection.close()
 
 
 
@@ -183,3 +247,24 @@ def filter_applications(status):
 
 
 
+def check_application_dates():
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id, company, application_date FROM applications")
+    applications = cursor.fetchall()
+
+    for application in applications:
+        print(application)
+
+    cursor.close()
+    connection.close()
+
+
+
+"""
+to test the search_application()
+if __name__ == "__main__":
+    results = search_application("microsoft")
+    print(results)
+"""
