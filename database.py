@@ -117,7 +117,15 @@ def update_application(app_id):
 
     while True:
         application = get_application_by_id(app_id)
-        print("Application retrieved:", application)
+        print(f"""
+            Application found!
+
+            ID: {application[0]}
+            Company name: {application[1]}
+            Job position: {application[2]}
+            Application date: {application[3]}
+            Status: {application[4]}
+        """)
 
         if application is None:
             print("Application not found!")
@@ -162,21 +170,42 @@ def update_application(app_id):
             print("No changes detected!")
             continue
 
+
         connection = connect_db()
         cursor = connection.cursor()
         
         try:
-            sql_statement = f"""
-                UPDATE applications
-                SET {column_name} = ?
-                WHERE id = ?
-            """
+            print("Current value:", current_value)
+            print("New value:", new_value)
+
+            selected_option = ['yes', 'no']
+
+            while True:
+                confirmation = input("Are you sure? (yes or no): ").strip().lower()
+                if confirmation not in selected_option:
+                    print("Please enter yes or no!")
             
-            cursor.execute(sql_statement, (new_value, app_id))
-            connection.commit()
-            
-            print("Application updated successfully!")
-        
+                elif confirmation == selected_option[0]:
+                    sql_statement = f"""
+                        UPDATE applications
+                        SET {column_name} = ?
+                        WHERE id = ?
+                    """
+                    
+                    cursor.execute(sql_statement, (new_value, app_id))
+
+                    if cursor.rowcount == 1:
+                        connection.commit()
+                        print("Application updated successfully!")    
+                    else:
+                        connection.rollback()  
+                        print("No matching application was updated!")
+                    break
+                
+                elif confirmation == selected_option[1]:
+                    print("Update cancelled!")
+                    break
+
         except sqlite3.Error as error:
             connection.rollback()
             print(f"Database error: {error}")
