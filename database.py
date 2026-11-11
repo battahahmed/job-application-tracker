@@ -117,6 +117,11 @@ def update_application(app_id):
 
     while True:
         application = get_application_by_id(app_id)
+
+        if application is None:
+            print("Application not found!")
+            return
+        
         print(f"""
             Application found!
 
@@ -127,9 +132,6 @@ def update_application(app_id):
             Status: {application[4]}
         """)
 
-        if application is None:
-            print("Application not found!")
-            return
         
         user_option = input("Enter your update option (1-5): ").strip()
         if user_option == '5':
@@ -181,7 +183,7 @@ def update_application(app_id):
             selected_option = ['yes', 'no']
 
             while True:
-                confirmation = input("Are you sure? (yes or no): ").strip().lower()
+                confirmation = input("Are you sure (yes or no)?: ").strip().lower()
                 if confirmation not in selected_option:
                     print("Please enter yes or no!")
             
@@ -218,24 +220,66 @@ def update_application(app_id):
 
 
 
-
 def delete_application(application_id):
     connection = connect_db()
     cursor = connection.cursor()
-    sql_statement = """
-        DELETE FROM applications
-        WHERE id = ?
-"""
-    cursor.execute(sql_statement, (application_id,))
 
-    if cursor.rowcount == 0:
-        print("No application found with that ID.")
-    else:
-        print("Application deleted successfully.")
+    try:
+        application = get_application_by_id(application_id)
 
-    connection.commit()
-    cursor.close()
-    connection.close()
+        if application is None:
+            print("No application found with that ID.")
+            return
+
+        display_date = datetime.strptime(
+            application[3], "%Y-%m-%d"
+        ).strftime("%d/%m/%Y")
+
+        print(f"""
+        Application found!
+
+        ID: {application[0]}
+        Company name: {application[1]}
+        Job position: {application[2]}
+        Application date: {display_date}
+        Status: {application[4]}
+    """)
+        selected_option = ['yes', 'no']
+
+        while True:
+            confirmation = input("Are you sure (yes or no)?: ").strip().lower()
+            if confirmation not in selected_option:
+                print("Please enter yes or no!")
+
+            elif confirmation == selected_option[0]:
+                sql_statement = """
+                    DELETE FROM applications
+                    WHERE id = ?
+                """
+                
+
+                cursor.execute(sql_statement, (application_id,))
+
+                if cursor.rowcount == 1:
+                    connection.commit()
+                    print("Application deleted successfully.")
+                    
+                else:
+                    connection.rollback()
+                    print("No application found with that ID.")
+                break
+
+            elif confirmation == selected_option[1]:
+                print("Deletion cancelled")
+                break
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print(f"Database error: {error}")
+
+    finally:   
+        cursor.close()
+        connection.close()
 
 
 
