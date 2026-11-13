@@ -13,9 +13,11 @@ while True:
 4. Delete an application
 5. Search applications by company
 6. Filter applications by status
-7. Exit
+7. Add an interview
+8. View interviews
+9. Exit
 """)
-    choice = input("Enter your choice (1-7): ")
+    choice = input("Enter your choice (1-9): ")
     if choice == '1':
         while True:
             company = input("Company name: ").strip().upper()
@@ -68,7 +70,7 @@ while True:
                 print("Invalid choice. Please enter a number from 1 to 4.")
             else:
                 break
-        applications = view_application(menu)
+        applications = view_applications(menu)
         if not applications:
             print("No applications found.")
         else:
@@ -170,7 +172,13 @@ while True:
 
 
     elif choice == '7':
+        add_interview()
+    
+    elif choice == '8':
+        view_interviews()
+    
+    elif choice == '9':
         print('Goodbye! Thanks for using Job Application Tracker.')
         break
     else:
-        print('Invalid choice. Please enter a number between 1 and 7.')
+        print('Invalid choice. Please enter a number between 1 and 9.')

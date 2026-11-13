@@ -3,12 +3,14 @@ from datetime import datetime
 
 def connect_db():
     connection = sqlite3.connect('jobs.db')
+    
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 def create_table():
     connection = connect_db()
 
-    sql_statement = """
+    application_sql_statement = """
     CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY,
         company TEXT,
@@ -17,10 +19,21 @@ def create_table():
         status TEXT
     )
     """
-
-    connection.execute(sql_statement)
+    interview_sql_statement = """
+        CREATE TABLE IF NOT EXISTS interviews (
+        interview_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        application_id INTEGER NOT NULL, 
+        interview_date TEXT NOT NULL,
+        interview_type TEXT NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (application_id) REFERENCES applications(id)
+    )
+    """ 
+    connection.execute(application_sql_statement) 
+    connection.execute(interview_sql_statement)
     connection.commit()
     connection.close()
+
 
 
 def add_application(company, position, application_date, status):
@@ -45,7 +58,7 @@ def add_application(company, position, application_date, status):
 
 
 
-def view_application(user_choice):
+def view_applications(user_choice):
     sort_options = {
         "1": "application_date DESC",
         "2": "application_date ASC",
@@ -333,6 +346,130 @@ def check_application_dates():
     cursor.close()
     connection.close()
 
+
+def add_interview():
+    applications = view_applications("1")
+    if not applications:
+        print("No applications found!")
+        return
+    for application in applications:
+        print(f"""
+            ID: {application[0]}
+            Company: {application[1]}
+            Job position: {application[2]}          
+        """)
+
+    while True:
+        try:
+            app_id = int(input("ID: ").strip())
+        except ValueError:
+            print("ID should be a number!")
+            continue
+        application_id = get_application_by_id(app_id)
+
+        if application_id is None:
+            print("Application not found!")
+            return
+        
+        print(f"""
+            Application found!
+
+            ID: {application_id[0]}
+            Company name: {application_id[1]}
+            Job position: {application_id[2]}
+            Application date: {application_id[3]}
+            Status: {application_id[4]}
+        """)
+        break
+
+    while True:
+        interview_date = input("Interview date (DD/MM/YYYY): ").strip()
+        try:
+            date_object = datetime.strptime(interview_date, "%d/%m/%Y")
+            interview_date = date_object.strftime("%Y-%m-%d")
+            break
+        except ValueError:
+            print("Invalid date. Please enter a valid date and use DD/MM/YYYY format.")
+
+    
+    valid_types = ["TECHNICAL", "HR", "PHONE", "VIDEO", "IN-PERSON", "ONLINE"]
+    while True:
+        interview_type = input("Interview type: ").strip().upper()
+        if not interview_type:
+            print("Interview type can't be empty! Please enter an interview type.")
+        elif interview_type not in valid_types:
+            print("Invalid type!")
+        else:
+            break
+
+    notes = input("Interview notes: ").strip()
+
+    connection = connect_db()
+
+
+    sql_statement = """
+        INSERT INTO interviews
+            (application_id, interview_date, interview_type, notes)
+        VALUES (?, ?, ?, ?)
+
+    """
+
+    cursor = connection.cursor()
+    cursor.execute(
+        sql_statement, 
+        (app_id, interview_date, interview_type, notes)
+    )
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+
+def view_interviews():
+    connection = connect_db()
+    cursor = connection.cursor()
+    sql_statement = """
+        SELECT
+            interviews.interview_id,
+            interviews.application_id,
+            interviews.interview_date,
+            interviews.interview_type,
+            interviews.notes,
+            applications.company,
+            applications.position
+        FROM interviews
+        JOIN applications ON interviews.application_id = applications.id
+"""
+
+    cursor.execute(sql_statement)
+    interview_records = cursor.fetchall()
+
+    if not interview_records:
+        print("No interviews found.")
+
+    else:
+        for interview in interview_records:
+            interview_id, application_id, interview_date, interview_type, notes, company, position = interview
+            display_date = datetime.strptime(interview_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+            if not notes:
+                notes = "No notes provided."  
+            print(f"""
+            Interview ID: {interview_id}
+            Application ID: {application_id}
+            Interview Date: {display_date}
+            Interview Type: {interview_type}
+            Notes: {notes}
+            Company: {company}
+            Position: {position}
+            ---------------------------------------------
+""")
+
+    cursor.close()
+    connection.close()
+
+
+    return interview_records
+
+create_table()
 
 
 """
