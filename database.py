@@ -369,7 +369,7 @@ def add_interview():
 
         if application_id is None:
             print("Application not found!")
-            return
+            continue
         
         print(f"""
             Application found!
@@ -469,7 +469,119 @@ def view_interviews():
 
     return interview_records
 
+
+def show_statistics():
+
+    # 1. Initialize connection and cursor variables
+    connection = None
+    cursor = None
+
+    try:
+        # 2. Connect to database and create cursor
+        connection = connect_db()
+        cursor = connection.cursor()
+
+        # 3. Execute all database queries
+        # 4. Retrieve all required results
+
+        # Get total applications
+        sql_statement = """
+        SELECT COUNT(*)
+        FROM applications
+    """
+
+        cursor.execute(sql_statement)
+        total_applications_count = cursor.fetchone()
+        num = total_applications_count[0]
+
+
+        # Get applications grouped by status
+        sql_statement1 = """
+            SELECT status, COUNT(*)
+            FROM applications
+            GROUP BY status;
+        """
+
+        cursor.execute(sql_statement1)
+        total_applications_by_status = cursor.fetchall()
+
+
+        # Get total interview records
+        sql_statement2 = """
+            SELECT COUNT(*)
+            FROM interviews 
+        """
+
+        cursor.execute(sql_statement2)
+        total_interviews_applications_count = cursor.fetchone()
+        num2 = total_interviews_applications_count[0]
+
+
+        # Get unique applications with interviews
+        sql_statement3 = """
+            SELECT COUNT(DISTINCT application_id)
+            FROM interviews
+        """
+
+        cursor.execute(sql_statement3)
+        applications_with_interviews = cursor.fetchone()
+        num3 = applications_with_interviews[0]
+
+
+        # Get total offers
+        sql_statement4 = """
+            SELECT COUNT(*)
+            FROM applications 
+            WHERE status = 'OFFER'
+        """
+
+        cursor.execute(sql_statement4)
+        total_offers_count = cursor.fetchone()
+        num4 = total_offers_count[0]
+
+    except sqlite3.Error as error:
+        # 5. Handle database errors
+        print(f"Database error while retrieving statistics: {error}")
+        # 6. Stop normal execution
+        return
+
+    finally:
+        # 7. Close cursor and connection safely
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
+
+    # 8. Handle zero applications using an if statement
+    if num == 0:
+        print("\nNo application records!")
+        print("\nTotal applications: 0\n")
+        print("Interview rate: 0%")
+        print("Offer rate: 0%")
+
+    # 9. Calculate statistics
+    # 10. Display statistics
+    else:
+        # Calculate interview rate
+        interview_rate = (num3 / num) * 100
+
+        # Calculate offer rate
+        offer_rate = (num4 / num) * 100
+
+        print(f"\nTotal applications: {num}\n")
+        print("Applications by status:")
+        for status, count in total_applications_by_status:
+            print(f"{status}: {count}")
+        print(f"Interview rate: {interview_rate:.2f}%")
+        print(f"Offer rate: {offer_rate:.2f}%")
+
+    print(f"\nTotal interviews records: {num2}")
+    print(f"Total offers: {num4}\n")
+
+
 create_table()
+
+
 
 
 """

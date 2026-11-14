@@ -15,9 +15,10 @@ while True:
 6. Filter applications by status
 7. Add an interview
 8. View interviews
-9. Exit
+9. Show statistics
+10. Exit
 """)
-    choice = input("Enter your choice (1-9): ")
+    choice = input("Enter your choice (1-10): ")
     if choice == '1':
         while True:
             company = input("Company name: ").strip().upper()
@@ -176,9 +177,12 @@ while True:
     
     elif choice == '8':
         view_interviews()
-    
+
     elif choice == '9':
+        show_statistics()
+    
+    elif choice == '10':
         print('Goodbye! Thanks for using Job Application Tracker.')
         break
     else:
-        print('Invalid choice. Please enter a number between 1 and 9.')
+        print('Invalid choice. Please enter a number between 1 and 10.')
