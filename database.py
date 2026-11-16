@@ -1,5 +1,8 @@
 import sqlite3
 from datetime import datetime
+import csv
+import os
+
 
 def connect_db():
     connection = sqlite3.connect('jobs.db')
@@ -586,6 +589,61 @@ def show_statistics():
     print(f"\nTotal interviews records: {num2}")
     print(f"Total offers: {num4}\n")
     print(f"Applications submitted this month: {num5}\n")
+
+
+def export_applications():
+    # 1. Initialize connection and cursor variables
+    connection = None
+    cursor = None
+
+    try:  
+        # 2. Connect to the database and create a cursor
+        connection = connect_db()
+        cursor = connection.cursor()
+
+        # 3. Retrieve all application records
+        sql_statement = """
+            SELECT * FROM applications
+        """
+        cursor.execute(sql_statement)
+        records = cursor.fetchall()
+
+        # 4. Check whether records exist
+        if not records:
+            print("No applications found to export!")
+            return
+
+        # 5. Create the exports folder if necessary
+        os.makedirs("exports", exist_ok=True)
+
+        # 6. Create and open the CSV file
+        with open("exports/applications.csv", "w", newline="") as file:
+            # 7. Create a CSV writer
+            writer = csv.writer(file)
+        
+            # 8. Write column headers
+            writer.writerow(['ID', 'Company', 'Position', 'Application Date', 'Status'])
+
+            # 9. Write application records
+            for record in records:
+                writer.writerow(record)
+
+        # 10. Display export confirmation
+        print("Data exported successfully!")
+
+    except OSError as error:
+        print(f"File access error: {error}")
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+
+    finally:
+        # 11. Close database resources
+        if cursor is not None:
+            cursor.close()
+
+        if connection is not None:
+            connection.close()
 
 
 create_table()

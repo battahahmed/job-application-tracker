@@ -17,7 +17,8 @@ while True:
 7. Add an interview
 8. View interviews
 9. Show statistics
-10. Exit
+10. Export applications
+11. Exit
 """)
     
     choice = input("Enter your choice (1-11): ")
@@ -184,7 +185,10 @@ while True:
         show_statistics()
     
     elif choice == '10':
+        export_applications()
+    
+    elif choice == '11':
         print('Goodbye! Thanks for using Job Application Tracker.')
         break
     else:
-        print('Invalid choice. Please enter a number between 1 and 10.')
+        print('Invalid choice. Please enter a number between 1 and 11.')
