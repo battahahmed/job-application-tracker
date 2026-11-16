@@ -9,58 +9,84 @@ def connect_db():
     connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
-def create_table():
-    connection = connect_db()
 
-    application_sql_statement = """
-    CREATE TABLE IF NOT EXISTS applications (
-        id INTEGER PRIMARY KEY,
-        company TEXT,
-        position TEXT,
-        application_date TEXT,
-        status TEXT
-    )
-    """
-    interview_sql_statement = """
-        CREATE TABLE IF NOT EXISTS interviews (
-        interview_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        application_id INTEGER NOT NULL, 
-        interview_date TEXT NOT NULL,
-        interview_type TEXT NOT NULL,
-        notes TEXT,
-        FOREIGN KEY (application_id) REFERENCES applications(id)
-    )
-    """ 
-    connection.execute(application_sql_statement) 
-    connection.execute(interview_sql_statement)
-    connection.commit()
-    connection.close()
+def create_table():
+    connection = None
+
+    try:
+        connection = connect_db()
+
+        application_sql_statement = """
+        CREATE TABLE IF NOT EXISTS applications (
+            id INTEGER PRIMARY KEY,
+            company TEXT,
+            position TEXT,
+            application_date TEXT,
+            status TEXT
+        )
+        """
+        interview_sql_statement = """
+            CREATE TABLE IF NOT EXISTS interviews (
+            interview_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            application_id INTEGER NOT NULL, 
+            interview_date TEXT NOT NULL,
+            interview_type TEXT NOT NULL,
+            notes TEXT,
+            FOREIGN KEY (application_id) REFERENCES applications(id)
+        )
+        """ 
+        connection.execute(application_sql_statement) 
+        connection.execute(interview_sql_statement)
+        connection.commit()
+
+    except sqlite3.Error as e:
+        if connection is not None:
+            connection.rollback()
+        print(f"Database error: {e}")
+
+    finally:
+        if connection is not None:
+            connection.close()
 
 
 
 def add_application(company, position, application_date, status):
-    connection = connect_db()
+    connection = None
+    cursor = None
 
+    try:
+        connection = connect_db()
+        cursor = connection.cursor()
 
-    sql_statement = """
-        INSERT INTO applications
+        sql_statement = """
+            INSERT INTO applications
+                (company, position, application_date, status)
+            VALUES (?, ?, ?, ?)
+
+        """
+        cursor.execute(
+            sql_statement, 
             (company, position, application_date, status)
-        VALUES (?, ?, ?, ?)
+        )
+        connection.commit()
 
-"""
+    except sqlite3.Error as error:
+        if connection is not None:
+            connection.rollback()
+        print(f"Database error: {error}")
 
-    cursor = connection.cursor()
-    cursor.execute(
-        sql_statement, 
-        (company, position, application_date, status)
-    )
-    connection.commit()
-    cursor.close()
-    connection.close
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close
 
 
 
 def view_applications(user_choice):
+    connection = None
+    cursor = None
+
     sort_options = {
         "1": "application_date DESC",
         "2": "application_date ASC",
@@ -68,47 +94,71 @@ def view_applications(user_choice):
         "4": "id DESC"
     }
 
-    order_by = sort_options.get(user_choice) 
-    if order_by is not None:
-        connection = connect_db()
-        cursor = connection.cursor()
-        sql_statement = f"""
-            SELECT * 
-            FROM applications 
-            ORDER BY {order_by} 
-    """
-        cursor.execute(sql_statement)
-        applications = cursor.fetchall()
+    applications = []
 
-        cursor.close()
-        connection.close()
-    else:
-        print("Invalid choice")
-        return
+    try:
+        order_by = sort_options.get(user_choice) 
+        if order_by is not None:
+            connection = connect_db()
+            cursor = connection.cursor()
+            sql_statement = f"""
+                SELECT * 
+                FROM applications 
+                ORDER BY {order_by} 
+        """
+            cursor.execute(sql_statement)
+            applications = cursor.fetchall()
+            return applications
+        
+        else:
+            print("Invalid choice")
+            return
 
-    return applications
+    
+    except sqlite3.Error as error:
+        print(f"Database error: {error}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
 
 
 
 def get_application_by_id(app_id):
-    connection = connect_db()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
 
-    sql_statement = """
-        SELECT *
-        FROM applications
-        WHERE id = ?
-    """
+    try:
+        connection = connect_db()
+        cursor = connection.cursor()
 
-    cursor.execute(sql_statement, (app_id,))
-    applications = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    return applications
+        sql_statement = """
+            SELECT *
+            FROM applications
+            WHERE id = ?
+        """
+
+        cursor.execute(sql_statement, (app_id,))
+        applications = cursor.fetchone()
+        return applications
+
+    except sqlite3.Error as error:
+        print(f"Database error: {error}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
 
 
  
 def update_application(app_id):
+    connection = None
+    cursor = None
+
     print("""
         1. Company name
         2. Job position
@@ -187,11 +237,10 @@ def update_application(app_id):
             print("No changes detected!")
             continue
 
-
-        connection = connect_db()
-        cursor = connection.cursor()
         
         try:
+            connection = connect_db()
+            cursor = connection.cursor()
             print("Current value:", current_value)
             print("New value:", new_value)
 
@@ -224,22 +273,27 @@ def update_application(app_id):
                     break
 
         except sqlite3.Error as error:
-            connection.rollback()
+            if connection is not None:
+                connection.rollback()
+                
             print(f"Database error: {error}")
 
         finally:
-
-            cursor.close()
-            connection.close()
-        
+            if cursor is not None:
+                cursor.close()
+            if connection is not None:
+                connection.close()
 
 
 
 def delete_application(application_id):
-    connection = connect_db()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
 
     try:
+        connection = connect_db()
+        cursor = connection.cursor()
+
         application = get_application_by_id(application_id)
 
         if application is None:
@@ -272,7 +326,6 @@ def delete_application(application_id):
                     WHERE id = ?
                 """
                 
-
                 cursor.execute(sql_statement, (application_id,))
 
                 if cursor.rowcount == 1:
@@ -289,67 +342,107 @@ def delete_application(application_id):
                 break
 
     except sqlite3.Error as error:
-        connection.rollback()
+        if connection is not None:
+            connection.rollback()
         print(f"Database error: {error}")
 
     finally:   
-        cursor.close()
-        connection.close()
+        if cursor is not None:
+            cursor.close()
+        if connection is not None: 
+            connection.close()
 
 
 
 def search_application(company_name):
-    connection = connect_db()
-    cursor = connection.cursor()
+    connection = None 
+    cursor = None
 
-    sql_statement = ("""
-        SELECT * 
-        FROM applications 
-        WHERE LOWER(company) LIKE LOWER(?)
-    """)
+    applications = []
 
-    cursor.execute(sql_statement, (f"%{company_name}%",))
-    applications = cursor.fetchall()
-    print("DEBUG search results:", applications)
-    cursor.close()
-    connection.close()
-    return applications
+    try:
+        connection = connect_db()
+        cursor = connection.cursor()
+
+        sql_statement = ("""
+            SELECT * 
+            FROM applications 
+            WHERE LOWER(company) LIKE LOWER(?)
+        """)
+
+        cursor.execute(sql_statement, (f"%{company_name}%",))
+        applications = cursor.fetchall()
+        return applications
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
 
 
 
 def filter_applications(status):
-    connection = connect_db()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
 
-    sql_statement = """
-        SELECT * 
-        FROM applications
-        WHERE status = ? 
-"""
+    applications = []
+    try:
+        connection = connect_db()
+        cursor = connection.cursor()
 
-    cursor.execute(sql_statement, (status,))
-    applications = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return applications
+        sql_statement = """
+            SELECT * 
+            FROM applications
+            WHERE status = ? 
+    """
+
+        cursor.execute(sql_statement, (status,))
+        applications = cursor.fetchall()
+        return applications
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
+    
 
 
 
 def check_application_dates():
-    connection = connect_db()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
 
-    cursor.execute("SELECT id, company, application_date FROM applications")
-    applications = cursor.fetchall()
+    try:
+        connection = connect_db()
+        cursor = connection.cursor()
 
-    for application in applications:
-        print(application)
+        cursor.execute("SELECT id, company, application_date FROM applications")
+        applications = cursor.fetchall()
 
-    cursor.close()
-    connection.close()
+        for application in applications:
+            print(application)
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
 
 
 def add_interview():
+    connection = None
+    cursor = None
+
     applications = view_applications("1")
     if not applications:
         print("No applications found!")
@@ -369,9 +462,6 @@ def add_interview():
             continue
         application_id = get_application_by_id(app_id)
 
-        if application_id is None:
-            print("Application not found!")
-            continue
         
         print(f"""
             Application found!
@@ -406,87 +496,99 @@ def add_interview():
 
     notes = input("Interview notes: ").strip()
 
-    connection = connect_db()
+    try:
+        connection = connect_db()
+        cursor = connection.cursor()
+        
+        sql_statement = """
+            INSERT INTO interviews
+                (application_id, interview_date, interview_type, notes)
+            VALUES (?, ?, ?, ?)
 
+        """
 
-    sql_statement = """
-        INSERT INTO interviews
-            (application_id, interview_date, interview_type, notes)
-        VALUES (?, ?, ?, ?)
+        cursor.execute(
+            sql_statement, 
+            (app_id, interview_date, interview_type, notes)
+        )
+        connection.commit()
 
-    """
+    except sqlite3.Error as e:
+        if connection is not None:
+            connection.rollback()
+        print(f"Database error: {e}")
 
-    cursor = connection.cursor()
-    cursor.execute(
-        sql_statement, 
-        (app_id, interview_date, interview_type, notes)
-    )
-    connection.commit()
-    cursor.close()
-    connection.close()
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
+            
 
 
 def view_interviews():
-    connection = connect_db()
-    cursor = connection.cursor()
-    sql_statement = """
-        SELECT
-            interviews.interview_id,
-            interviews.application_id,
-            interviews.interview_date,
-            interviews.interview_type,
-            interviews.notes,
-            applications.company,
-            applications.position
-        FROM interviews
-        JOIN applications ON interviews.application_id = applications.id
-"""
-
-    cursor.execute(sql_statement)
-    interview_records = cursor.fetchall()
-
-    if not interview_records:
-        print("No interviews found.")
-
-    else:
-        for interview in interview_records:
-            interview_id, application_id, interview_date, interview_type, notes, company, position = interview
-            display_date = datetime.strptime(interview_date, "%Y-%m-%d").strftime("%d/%m/%Y")
-            if not notes:
-                notes = "No notes provided."  
-            print(f"""
-            Interview ID: {interview_id}
-            Application ID: {application_id}
-            Interview Date: {display_date}
-            Interview Type: {interview_type}
-            Notes: {notes}
-            Company: {company}
-            Position: {position}
-            ---------------------------------------------
-""")
-
-    cursor.close()
-    connection.close()
-
-
-    return interview_records
-
-
-def show_statistics():
-
-    # 1. Initialize connection and cursor variables
     connection = None
     cursor = None
 
     try:
-        # 2. Connect to database and create cursor
+        connection = connect_db()
+        cursor = connection.cursor()
+        sql_statement = """
+            SELECT
+                interviews.interview_id,
+                interviews.application_id,
+                interviews.interview_date,
+                interviews.interview_type,
+                interviews.notes,
+                applications.company,
+                applications.position
+            FROM interviews
+            JOIN applications ON interviews.application_id = applications.id
+    """
+
+        cursor.execute(sql_statement)
+        interview_records = cursor.fetchall()
+
+        if not interview_records:
+            print("No interviews found.")
+
+        else:
+            for interview in interview_records:
+                interview_id, application_id, interview_date, interview_type, notes, company, position = interview
+                display_date = datetime.strptime(interview_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+                if not notes:
+                    notes = "No notes provided."  
+                print(f"""
+                Interview ID: {interview_id}
+                Application ID: {application_id}
+                Interview Date: {display_date}
+                Interview Type: {interview_type}
+                Notes: {notes}
+                Company: {company}
+                Position: {position}
+                ---------------------------------------------
+    """)
+        return interview_records
+    
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None:
+            connection.close()
+
+
+
+def show_statistics():
+    connection = None
+    cursor = None
+
+    try:
         connection = connect_db()
         cursor = connection.cursor()
 
-        # 3. Execute all database queries
-        # 4. Retrieve all required results
-
-        # Get total applications
         sql_statement = """
         SELECT COUNT(*)
         FROM applications
@@ -496,8 +598,6 @@ def show_statistics():
         total_applications_count = cursor.fetchone()
         num = total_applications_count[0]
 
-
-        # Get applications grouped by status
         sql_statement1 = """
             SELECT status, COUNT(*)
             FROM applications
@@ -508,7 +608,6 @@ def show_statistics():
         total_applications_by_status = cursor.fetchall()
 
 
-        # Get total interview records
         sql_statement2 = """
             SELECT COUNT(*)
             FROM interviews 
@@ -518,8 +617,6 @@ def show_statistics():
         total_interviews_applications_count = cursor.fetchone()
         num2 = total_interviews_applications_count[0]
 
-
-        # Get unique applications with interviews
         sql_statement3 = """
             SELECT COUNT(DISTINCT application_id)
             FROM interviews
@@ -530,7 +627,6 @@ def show_statistics():
         num3 = applications_with_interviews[0]
 
 
-        # Get total offers
         sql_statement4 = """
             SELECT COUNT(*)
             FROM applications 
@@ -551,32 +647,23 @@ def show_statistics():
         num5 = monthly_applications_count[0]  
 
     except sqlite3.Error as error:
-        # 5. Handle database errors
         print(f"Database error while retrieving statistics: {error}")
-        # 6. Stop normal execution
         return
 
     finally:
-        # 7. Close cursor and connection safely
         if cursor is not None:
             cursor.close()
         if connection is not None:
             connection.close()
 
-    # 8. Handle zero applications using an if statement
     if num == 0:
         print("\nNo application records!")
         print("\nTotal applications: 0\n")
         print("Interview rate: 0%")
         print("Offer rate: 0%")
 
-    # 9. Calculate statistics
-    # 10. Display statistics
     else:
-        # Calculate interview rate
         interview_rate = (num3 / num) * 100
-
-        # Calculate offer rate
         offer_rate = (num4 / num) * 100
 
         print(f"\nTotal applications: {num}\n")
@@ -592,43 +679,29 @@ def show_statistics():
 
 
 def export_applications():
-    # 1. Initialize connection and cursor variables
     connection = None
     cursor = None
 
     try:  
-        # 2. Connect to the database and create a cursor
         connection = connect_db()
         cursor = connection.cursor()
 
-        # 3. Retrieve all application records
         sql_statement = """
             SELECT * FROM applications
         """
         cursor.execute(sql_statement)
         records = cursor.fetchall()
 
-        # 4. Check whether records exist
         if not records:
             print("No applications found to export!")
             return
 
-        # 5. Create the exports folder if necessary
         os.makedirs("exports", exist_ok=True)
-
-        # 6. Create and open the CSV file
         with open("exports/applications.csv", "w", newline="") as file:
-            # 7. Create a CSV writer
             writer = csv.writer(file)
-        
-            # 8. Write column headers
             writer.writerow(['ID', 'Company', 'Position', 'Application Date', 'Status'])
-
-            # 9. Write application records
             for record in records:
                 writer.writerow(record)
-
-        # 10. Display export confirmation
         print("Data exported successfully!")
 
     except OSError as error:
@@ -638,7 +711,6 @@ def export_applications():
         print(f"Database error: {e}")
 
     finally:
-        # 11. Close database resources
         if cursor is not None:
             cursor.close()
 
@@ -649,11 +721,5 @@ def export_applications():
 create_table()
 
 
-
-
-"""
-to test the search_application()
-if __name__ == "__main__":
-    results = search_application("microsoft")
-    print(results)
-"""
+if __name__ == '__main__':
+    check_application_dates()
