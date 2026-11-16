@@ -4,6 +4,7 @@ from database import *
 create_table()
 #check_application_dates()
 
+
 while True:
     print("""
     ===== JOB APPLICATION TRACKER =====
@@ -18,7 +19,8 @@ while True:
 9. Show statistics
 10. Exit
 """)
-    choice = input("Enter your choice (1-10): ")
+    
+    choice = input("Enter your choice (1-11): ")
     if choice == '1':
         while True:
             company = input("Company name: ").strip().upper()

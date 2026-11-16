@@ -3,7 +3,6 @@ from datetime import datetime
 
 def connect_db():
     connection = sqlite3.connect('jobs.db')
-    
     connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
@@ -539,6 +538,15 @@ def show_statistics():
         total_offers_count = cursor.fetchone()
         num4 = total_offers_count[0]
 
+        sql_statement5 = """
+            SELECT COUNT(*) 
+            FROM applications 
+            WHERE strftime('%Y-%m', application_date) = strftime('%Y-%m', 'now') 
+        """
+        cursor.execute(sql_statement5)
+        monthly_applications_count = cursor.fetchone()
+        num5 = monthly_applications_count[0]  
+
     except sqlite3.Error as error:
         # 5. Handle database errors
         print(f"Database error while retrieving statistics: {error}")
@@ -577,6 +585,7 @@ def show_statistics():
 
     print(f"\nTotal interviews records: {num2}")
     print(f"Total offers: {num4}\n")
+    print(f"Applications submitted this month: {num5}\n")
 
 
 create_table()
