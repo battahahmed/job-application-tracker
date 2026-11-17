@@ -229,3 +229,5 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+
+app.log

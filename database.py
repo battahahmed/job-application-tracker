@@ -2,6 +2,16 @@ import sqlite3
 from datetime import datetime
 import csv
 import os
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    filename="app.log",
+    filemode="a",
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logging.info("Logging system initialized successfully.")
+
 
 
 def connect_db():
@@ -38,11 +48,13 @@ def create_table():
         connection.execute(application_sql_statement) 
         connection.execute(interview_sql_statement)
         connection.commit()
+        logging.info("Database tables created or verified successfully.")
 
     except sqlite3.Error as e:
         if connection is not None:
             connection.rollback()
         print(f"Database error: {e}")
+        logging.error(f"Database error while creating table: {e}.")
 
     finally:
         if connection is not None:
@@ -69,11 +81,13 @@ def add_application(company, position, application_date, status):
             (company, position, application_date, status)
         )
         connection.commit()
+        logging.info("Application added successfully.")
 
     except sqlite3.Error as error:
         if connection is not None:
             connection.rollback()
         print(f"Database error: {error}")
+        logging.error(f"Database error while adding application: {error}")
 
     finally:
         if cursor is not None:
@@ -108,15 +122,18 @@ def view_applications(user_choice):
         """
             cursor.execute(sql_statement)
             applications = cursor.fetchall()
+            logging.info(f"Applications displayed successfully.")
             return applications
         
         else:
             print("Invalid choice")
+            logging.warning(f"Invalid sorting option selected: {user_choice}")
             return
 
     
     except sqlite3.Error as error:
         print(f"Database error: {error}")
+        logging.error(f"Database error while displaying applications: {error}")
 
     finally:
         if cursor is not None:
@@ -142,10 +159,17 @@ def get_application_by_id(app_id):
 
         cursor.execute(sql_statement, (app_id,))
         applications = cursor.fetchone()
+
+        if applications is not None:
+            logging.info(f"Application ID {app_id} retrieved successfully.")
+        else:
+            logging.warning(f"No application found with ID {app_id}.")
+        
         return applications
 
     except sqlite3.Error as error:
         print(f"Database error: {error}")
+        logging.error(f"Database error while retrieving application ID {app_id}: {error}.")
 
     finally:
         if cursor is not None:
@@ -185,6 +209,7 @@ def update_application(app_id):
 
         if application is None:
             print("Application not found!")
+            logging.warning(f"Update attempted for non-existent application ID {app_id}.")
             return
         
         print(f"""
@@ -262,10 +287,14 @@ def update_application(app_id):
 
                     if cursor.rowcount == 1:
                         connection.commit()
-                        print("Application updated successfully!")    
+                        print("Application updated successfully!")
+                        logging.info(f"Application ID {app_id} updated successfully.")    
                     else:
                         connection.rollback()  
                         print("No matching application was updated!")
+                        logging.warning(
+                            f"Update attempted, but no matching application was updated for ID {app_id}."
+                            )
                     break
                 
                 elif confirmation == selected_option[1]:
@@ -274,10 +303,10 @@ def update_application(app_id):
 
         except sqlite3.Error as error:
             if connection is not None:
-                connection.rollback()
-                
+                connection.rollback()     
             print(f"Database error: {error}")
-
+            logging.error(f"Database error while updating application: {error}")
+        
         finally:
             if cursor is not None:
                 cursor.close()
@@ -298,6 +327,7 @@ def delete_application(application_id):
 
         if application is None:
             print("No application found with that ID.")
+            logging.warning(f"Deletion attempted for non-existent application ID {application_id}.")
             return
 
         display_date = datetime.strptime(
@@ -331,11 +361,14 @@ def delete_application(application_id):
                 if cursor.rowcount == 1:
                     connection.commit()
                     print("Application deleted successfully.")
+                    logging.info(f"Application ID {application_id} deleted successfully.")
                     
                 else:
                     connection.rollback()
                     print("No application found with that ID.")
+                    logging.warning(f"Deletion attempted, but no application was deleted for ID {application_id}.")
                 break
+
 
             elif confirmation == selected_option[1]:
                 print("Deletion cancelled")
@@ -345,6 +378,7 @@ def delete_application(application_id):
         if connection is not None:
             connection.rollback()
         print(f"Database error: {error}")
+        logging.error(f"Database error while deleting application: {error}")
 
     finally:   
         if cursor is not None:
@@ -372,10 +406,15 @@ def search_application(company_name):
 
         cursor.execute(sql_statement, (f"%{company_name}%",))
         applications = cursor.fetchall()
-        return applications
+        if not applications:
+            logging.warning("No application records found.")
+        else:
+            logging.info(f"Applications found successfully")
+            return applications
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
+        logging.error(f"Database error while searching application for company {company_name}: {e}")
 
     finally:
         if cursor is not None:
@@ -402,10 +441,16 @@ def filter_applications(status):
 
         cursor.execute(sql_statement, (status,))
         applications = cursor.fetchall()
-        return applications
+        if not applications:
+            logging.warning("No application records found.")
+        else:
+            logging.info(f"Applications filtered by {status} successfully.")
+            return applications
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
+        logging.error(f"Database error while filtering applications by {status}: {e}.")
+
     finally:
         if cursor is not None:
             cursor.close()
@@ -428,9 +473,11 @@ def check_application_dates():
 
         for application in applications:
             print(application)
+        logging.info(f"Application dates retrieved and checked successfully.")
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
+        logging.error(f"Database error while checking application dates: {e}.")
 
     finally:
         if cursor is not None:
@@ -446,7 +493,9 @@ def add_interview():
     applications = view_applications("1")
     if not applications:
         print("No applications found!")
+        logging.warning("No application records found.")
         return
+    
     for application in applications:
         print(f"""
             ID: {application[0]}
@@ -512,11 +561,13 @@ def add_interview():
             (app_id, interview_date, interview_type, notes)
         )
         connection.commit()
+        logging.info(f"Interview added successfully for application ID {app_id}.")
 
     except sqlite3.Error as e:
         if connection is not None:
             connection.rollback()
         print(f"Database error: {e}")
+        logging.error(f"Database error while adding interview: {e}")
 
     finally:
         if cursor is not None:
@@ -551,6 +602,7 @@ def view_interviews():
 
         if not interview_records:
             print("No interviews found.")
+            logging.warning("No interview records found.")
 
         else:
             for interview in interview_records:
@@ -568,10 +620,12 @@ def view_interviews():
                 Position: {position}
                 ---------------------------------------------
     """)
+            logging.info(f"Interview displayed successfully.")
         return interview_records
     
     except sqlite3.Error as e:
         print(f"Database error: {e}")
+        logging.error(f"Database error while displaying interviews: {e}")
 
     finally:
         if cursor is not None:
@@ -644,10 +698,12 @@ def show_statistics():
         """
         cursor.execute(sql_statement5)
         monthly_applications_count = cursor.fetchone()
-        num5 = monthly_applications_count[0]  
+        num5 = monthly_applications_count[0]
+  
 
     except sqlite3.Error as error:
         print(f"Database error while retrieving statistics: {error}")
+        logging.error(f"Database error while showing statistics: {error}.")
         return
 
     finally:
@@ -661,7 +717,7 @@ def show_statistics():
         print("\nTotal applications: 0\n")
         print("Interview rate: 0%")
         print("Offer rate: 0%")
-
+        logging.warning(f"No application records available.")
     else:
         interview_rate = (num3 / num) * 100
         offer_rate = (num4 / num) * 100
@@ -672,6 +728,7 @@ def show_statistics():
             print(f"{status}: {count}")
         print(f"Interview rate: {interview_rate:.2f}%")
         print(f"Offer rate: {offer_rate:.2f}%")
+        logging.info(f"Statistics generated and displayed successfully.")
 
     print(f"\nTotal interviews records: {num2}")
     print(f"Total offers: {num4}\n")
@@ -694,6 +751,7 @@ def export_applications():
 
         if not records:
             print("No applications found to export!")
+            logging.warning("No application records found.")
             return
 
         os.makedirs("exports", exist_ok=True)
@@ -703,12 +761,15 @@ def export_applications():
             for record in records:
                 writer.writerow(record)
         print("Data exported successfully!")
+        logging.info(f"Data exported successfully.")
 
     except OSError as error:
         print(f"File access error: {error}")
+        logging.error(f"File access error while exporting data: {e}")
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
+        logging.error(f"Database error while exporting data: {e}")
 
     finally:
         if cursor is not None:
@@ -720,6 +781,7 @@ def export_applications():
 
 create_table()
 
-
+"""
 if __name__ == '__main__':
     check_application_dates()
+    """
