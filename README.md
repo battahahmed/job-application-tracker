@@ -18,6 +18,22 @@ A lightweight Python Command-Line Interface (CLI) application designed to help j
 - Error Handling and Logging: Handle database and file errors and record important events in a log file.
 
 
+
+## Screenshots
+
+### Main Menu
+![Main Menu](screenshots/main-menu.png)
+
+### Applications List
+![Applications List](screenshots/applications-list.png)
+
+### Statistics
+![Statistics](screenshots/statistics.png)
+
+### CSV Export
+![CSV Export](screenshots/csv-export.png)
+
+
 ## Technologies Used
 
 - Python: Main programming language.
