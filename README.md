@@ -3,6 +3,13 @@
 A lightweight Python Command-Line Interface (CLI) application designed to help job seekers organize and track their applications. 
 
 
+
+## Project Purpose
+
+This project was developed as a hands-on learning experience to practise and strengthen Python programming skills by building a practical application. It provided an opportunity to apply concepts such as CRUD operations, SQLite database management, error handling, logging, and CSV file handling in a real-world-style project.
+
+
+
 ## Features
 
 - Create: Add new job applications with company name, position, application date, and status.
