@@ -225,7 +225,9 @@ __marimo__/
 *.sqlite3
 
 jobs.db
+test_jobs.db
 __pycache__/
+exports/
 *.py[cod]
 .venv/
 .env
